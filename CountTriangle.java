@@ -32,7 +32,7 @@ public class CountTriangle extends Configured implements Tool {
     public static class MapperOne extends Mapper<LongWritable, Text, LongWritable, LongWritable> {
         
         @Override
-        public void map(LongWritable key, Text value, Context context) {
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] vals = value.toString().split("\\s+");
 
             if (vals.length > 1) {
@@ -71,7 +71,7 @@ public class CountTriangle extends Configured implements Tool {
         Text outValue = new Text();
 
         @Override
-        public void reduce(LongWritable key, Iterable<LongWritable> values, Context context) {
+        public void reduce(LongWritable key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
             LinkedHashSet<LongWritable> set = new LinkedHashSet();
             for (LongWritable v : values) {
                 set.add(new LongWritable (v.get()));
@@ -107,7 +107,7 @@ public class CountTriangle extends Configured implements Tool {
     public static class MapperTwo extends Mapper<LongWritable, Text, Text, LongWritable> {
         
         @Override
-        public void map(LongWritable key, Text value, Context context) {
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] vals = value.toString().split("\\s+");
 
             if (vals.length > 1) {
@@ -121,7 +121,7 @@ public class CountTriangle extends Configured implements Tool {
      */
     public static class ReducerTwo extends Reducer<Text, LongWritable, Text, LongWritable> {
         @Override
-        public void reduce(Text key, Iterable<LongWritable> values, Context context) {
+        public void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
             long count = 0;
             boolean isDollarFound = false;
 
@@ -143,7 +143,7 @@ public class CountTriangle extends Configured implements Tool {
     public static class MapperThree extends Mapper<LongWritable, Text, Text, LongWritable> {
         
         @Override
-        public void map(LongWritable key, Text value, Context context) {
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] vals = value.toString().split("\\s+");
             
             if (vals.length > 1) {
@@ -155,7 +155,7 @@ public class CountTriangle extends Configured implements Tool {
     public static class SumReducer extends Reducer<Text, LongWritable, Text, LongWritable> {
         
         @Override
-        public void reduce(Text key, Iterable<LongWritable> values, Context context) {
+        public void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
             long sumCount = 0;
             
             for (LongWritable count : values) {
@@ -165,7 +165,7 @@ public class CountTriangle extends Configured implements Tool {
         }
     }
 
-    public int run(String[] args) {
+    public int run(String[] args) throws Exception {
         Job jobOne = new Job(getConf());
         jobOne.setJobName("mapreduce-one");
     
