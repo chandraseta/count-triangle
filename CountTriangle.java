@@ -39,7 +39,12 @@ public class CountTriangle extends Configured implements Tool {
                 long val1 = Long.parseLong(vals[0]);
                 long val2 = Long.parseLong(vals[1]);
 
-                context.write(new LongWritable(min(val1, val2)), new LongWritable(max(val1, val2)));
+		if (val1 < val2) {
+		    context.write(new LongWritable(val1), new LongWritable(val2));
+		}
+		else {
+		    context.write(new LongWritable(val2), new LongWritable(val1));
+		}
             }
         }
     }
@@ -71,21 +76,23 @@ public class CountTriangle extends Configured implements Tool {
             for (LongWritable v : values) {
                 set.add(new LongWritable (v.get()));
             }
-            LongWritable[] uniqueValues = set.toArray();
 
-            max_index = uniqueValues.length;
+            List<LongWritable> uniqueValues = new ArrayList<LongWritable>();
+	    uniqueValues.addAll(set);
+
+            long max_index = uniqueValues.size();
             for (int i=0; i<max_index; i++) {
-                outKey.set(key.toString() + ',' + Long.toString(uniqueValues[i]));
+                outKey.set(key.toString() + ',' + uniqueValues.get(i).toString());
                 outValue.set(DOLLAR.toString());
                 context.write(outKey, outValue);
         
                 for (int j=i; j<max_index; j++) {
-                    if (uniqueValues[i] < uniqueValues[j]) {
-                        outKey.set(Long.toString(uniqueValues[i]) + ',' + Long.toString(uniqueValues[j]));
+                    if (uniqueValues.get(i).get() < uniqueValues.get(j).get()) {
+                        outKey.set(uniqueValues.get(i).toString() + ',' + uniqueValues.get(j).toString());
                         outValue.set(key.toString());
                     }
                     else {
-                        outKey.set(Long.toString(uniqueValues[j]) + ',' + Long.toString(uniqueValues[i]));
+                        outKey.set(uniqueValues.get(j).toString() + ',' + uniqueValues.get(i).toString());
                         outValue.set(key.toString());
                     }
                     context.write(outKey, outValue);
@@ -112,7 +119,7 @@ public class CountTriangle extends Configured implements Tool {
     /**
      * Reduces <Text, Long> to <Long, Long>
      */
-    public static class ReducerTwo extends Reducer<Text, LongWritable, LongWritable, LongWritable> {
+    public static class ReducerTwo extends Reducer<Text, LongWritable, Text, LongWritable> {
         @Override
         public void reduce(Text key, Iterable<LongWritable> values, Context context) {
             long count = 0;
@@ -133,7 +140,7 @@ public class CountTriangle extends Configured implements Tool {
         }
     }
 
-    public static class MapperThree extends Reducer<> {
+    public static class MapperThree extends Mapper<LongWritable, Text, Text, LongWritable> {
         
         @Override
         public void map(LongWritable key, Text value, Context context) {
@@ -154,7 +161,7 @@ public class CountTriangle extends Configured implements Tool {
             for (LongWritable count : values) {
                 sumCount += count.get();
             }
-            context.write(new Text("totalTriangle"), new LongWritable(sum));
+            context.write(new Text("totalTriangle"), new LongWritable(sumCount));
         }
     }
 
@@ -168,7 +175,7 @@ public class CountTriangle extends Configured implements Tool {
         jobOne.setOutputKeyClass(Text.class);
         jobOne.setOutputValueClass(Text.class);
     
-        jobOne.setJarByClass(TriangleCount.class);
+        jobOne.setJarByClass(CountTriangle.class);
         jobOne.setMapperClass(MapperOne.class);
         jobOne.setReducerClass(ReducerOne.class);
     
@@ -185,8 +192,8 @@ public class CountTriangle extends Configured implements Tool {
         jobTwo.setOutputKeyClass(LongWritable.class);
         jobTwo.setOutputValueClass(LongWritable.class);
     
-        jobTwo.setJarByClass(TriangleCount.class);
-        jobTwo.setMapperClass(MapperTextLongWritable.class);
+        jobTwo.setJarByClass(CountTriangle.class);
+        jobTwo.setMapperClass(MapperTwo.class);
         jobTwo.setReducerClass(ReducerTwo.class);
     
         TextInputFormat.addInputPath(jobTwo, new Path("/user/iedrc/tmp/mapreduce-one"));
@@ -203,11 +210,11 @@ public class CountTriangle extends Configured implements Tool {
         jobThree.setOutputKeyClass(LongWritable.class);
         jobThree.setOutputValueClass(NullWritable.class);
     
-        jobThree.setJarByClass(TriangleCount.class);
-        jobThree.setMapperClass(MapperTextLongWritable.class);
-        jobThree.setReducerClass(ReducerThree.class);
+        jobThree.setJarByClass(CountTriangle.class);
+        jobThree.setMapperClass(MapperThree.class);
+        jobThree.setReducerClass(SumReducer.class);
     
-        TextInputFormat.addInputPath(jobThree, new Path("/user/rayandrew/temp/mapreduce-two"));
+        TextInputFormat.addInputPath(jobThree, new Path("/user/iedrc/temp/mapreduce-two"));
         TextOutputFormat.setOutputPath(jobThree, new Path(args[1]));
     
 
