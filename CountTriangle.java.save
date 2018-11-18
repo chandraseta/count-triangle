@@ -180,7 +180,8 @@ public class CountTriangle extends Configured implements Tool {
         jobOne.setReducerClass(ReducerOne.class);
     
         TextInputFormat.addInputPath(jobOne, new Path(args[0]));
-        TextOutputFormat.setOutputPath(jobOne, new Path("/user/ren/temp/mapreduce-one"));
+        TextOutputFormat.setOutputPath(jobOne, new Path("/user/
+ren/temp/mapreduce-one"));
     
 
         Job jobTwo = new Job(getConf());
